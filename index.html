@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Greenie — Chậu cây xơ dừa thông minh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --g-dark: #2D5A27;
+      --g-mid: #4A8C3F;
+      --g-light: #7AB648;
+      --g-pale: #EAF3DE;
+      --g-cream: #F5F0E8;
+      --surface-0: #f0ede6;
+      --surface-1: #f7f5f0;
+      --surface-2: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.18);
+      --text-primary: #1a1a18;
+      --text-secondary: #5a5a54;
+      --text-muted: #9a9a90;
+      --radius: 8px;
+      --fn: 'Nunito', sans-serif;
+      --fi: 'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--fi);
+      background: var(--g-cream);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* ── Logo ── */
+    .g-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 0.5px solid var(--border); }
+    .g-logo-icon { width: 36px; height: 36px; background: var(--g-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .g-logo-text { font-family: var(--fn); font-size: 20px; font-weight: 700; color: var(--g-dark); }
+    .g-logo-sub { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Screens ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── Hero ── */
+    .hero-block { background: var(--g-dark); border-radius: 16px; padding: 2rem 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+    .hero-block::after { content: '🌱'; font-size: 80px; position: absolute; right: -10px; top: -10px; opacity: 0.15; }
+    .hero-block h1 { font-family: var(--fn); font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .hero-block p { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.6; max-width: 340px; }
+
+    /* ── Buttons ── */
+    .btn-primary { background: var(--g-dark); color: #fff; border: none; border-radius: var(--radius); padding: 12px 24px; font-family: var(--fn); font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; transition: background 0.2s; }
+    .btn-primary:hover { background: var(--g-mid); }
+    .btn-secondary { background: transparent; color: var(--g-dark); border: 1.5px solid var(--g-dark); border-radius: var(--radius); padding: 10px 20px; font-family: var(--fn); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-secondary:hover { background: var(--g-pale); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 0.5px solid var(--border-strong); border-radius: var(--radius); padding: 8px 16px; font-size: 13px; cursor: pointer; }
+    .btn-ghost:hover { background: var(--surface-1); }
+
+    /* ── Step bar ── */
+    .step-bar { display: flex; align-items: center; margin-bottom: 0.5rem; }
+    .step-dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; transition: all 0.3s; }
+    .step-dot.done { background: var(--g-dark); color: #fff; }
+    .step-dot.active { background: var(--g-light); color: #fff; }
+    .step-dot.idle { background: var(--surface-1); color: var(--text-muted); border: 0.5px solid var(--border-strong); }
+    .step-line { flex: 1; height: 1px; background: var(--border-strong); }
+    .step-line.done { background: var(--g-dark); }
+    .step-labels { display: flex; justify-content: space-between; margin-top: 3px; margin-bottom: 1.25rem; }
+    .step-label { font-size: 9px; color: var(--text-muted); text-align: center; flex: 1; }
+    .step-label.active { color: var(--g-dark); font-weight: 700; }
+    .step-label.done { color: var(--g-mid); }
+
+    /* ── Cards & inputs ── */
+    .input-card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .input-card label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="text"], input[type="date"], select {
+      width: 100%; padding: 10px 12px; border: 0.5px solid var(--border-strong); border-radius: var(--radius);
+      font-family: var(--fi); font-size: 14px; color: var(--text-primary); background: var(--surface-2);
+      outline: none; transition: border-color 0.15s;
+    }
+    input:focus, select:focus { border-color: var(--g-dark); }
+    .code-input-row { display: flex; gap: 8px; }
+    .code-input-row input { flex: 1; font-family: var(--fn); font-size: 18px; letter-spacing: 4px; font-weight: 700; text-transform: uppercase; text-align: center; }
+    .code-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .code-hint span { color: var(--g-mid); font-weight: 500; cursor: pointer; }
+    .form-row { margin-bottom: 1rem; }
+    .form-row label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .error-msg { color: #A32D2D; font-size: 12px; margin-top: 6px; display: none; }
+
+    /* ── Tip card ── */
+    .tip-card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; display: flex; gap: 10px; }
+    .tip-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--g-pale); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .tip-body { flex: 1; }
+    .tip-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .tip-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ── Section ── */
+    .section-title { font-family: var(--fn); font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .section-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 1rem; }
+
+    /* ── Pot type ── */
+    .pot-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .pot-option { border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 10px; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .pot-option.selected { border-color: var(--g-dark); background: var(--g-pale); }
+    .pot-option-icon { font-size: 28px; display: block; margin-bottom: 4px; }
+    .pot-option-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .pot-option-sub { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Guide ── */
+    .guide-header { background: var(--g-dark); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem; text-align: center; }
+    .guide-header h2 { font-family: var(--fn); font-size: 19px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .guide-header p { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .guide-step { display: flex; gap: 14px; margin-bottom: 10px; }
+    .guide-step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--g-dark); color: #fff; font-family: var(--fn); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .guide-step-body { flex: 1; background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .guide-step-body.highlight { border-color: var(--g-light); background: var(--g-pale); }
+    .guide-step-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+    .guide-step-title.highlight { color: var(--g-dark); }
+    .guide-step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+    .material-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip { border-radius: 20px; padding: 4px 11px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; border: 0.5px solid var(--border); background: var(--surface-1); color: var(--text-secondary); }
+    .chip.green { background: var(--g-pale); color: var(--g-dark); border-color: var(--g-light); }
+    .chip.brown { background: #F5EFE6; color: #7A5C3A; border-color: #C4A882; }
+    .size-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .size-table th { text-align: left; color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 6px 8px; border-bottom: 0.5px solid var(--border); }
+    .size-table td { padding: 8px 8px; border-bottom: 0.5px solid var(--border); color: var(--text-primary); }
+    .size-table tr:last-child td { border-bottom: none; }
+    .size-badge { display: inline-block; background: var(--g-dark); color: #fff; border-radius: 4px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+
+    /* ── Tab bar ── */
+    .tab-bar { display: flex; gap: 4px; background: var(--surface-1); border-radius: 10px; padding: 4px; margin-bottom: 1.25rem; border: 0.5px solid var(--border); }
+    .tab-btn { flex: 1; padding: 7px 8px; border: none; background: transparent; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+    .tab-btn.active { background: var(--surface-2); color: var(--g-dark); border: 0.5px solid var(--border); }
+
+    /* ── AI panel ── */
+    .ai-header { background: var(--g-dark); border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 12px; }
+    .ai-spark { width: 40px; height: 40px; background: rgba(255,255,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .ai-header-text h2 { font-family: var(--fn); font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+    .ai-header-text p { font-size: 12px; color: rgba(255,255,255,0.7); }
+    .quick-plants { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+    .quick-plant { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: all 0.15s; color: var(--text-secondary); }
+    .quick-plant:hover { background: var(--g-pale); color: var(--g-dark); border-color: var(--g-light); }
+    .ai-input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .ai-input-row input { flex: 1; }
+    .ai-result-box { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; min-height: 80px; }
+    .ai-thinking { display: flex; gap: 5px; align-items: center; justify-content: center; padding: 1rem 0; }
+    .ai-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--g-light); animation: pulse 1.2s ease-in-out infinite; }
+    .ai-dot:nth-child(2) { animation-delay: 0.2s; }
+    .ai-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8);}50%{opacity:1;transform:scale(1.1);} }
+    .ai-section-label { font-size: 11px; font-weight: 700; color: var(--g-mid); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .ai-care-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .ai-care-card { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .ai-care-card-icon { font-size: 18px; margin-bottom: 4px; }
+    .ai-care-card-title { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .ai-care-card-val { font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
+    .ai-tip-list { list-style: none; }
+    .ai-tip-list li { display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .ai-tip-list li:last-child { border-bottom: none; }
+    .ai-tip-list li::before { content: '🌿'; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .ai-result-plant-name { font-family: var(--fn); font-size: 17px; font-weight: 700; color: var(--g-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* ── Dashboard ── */
+    .dashboard-header { background: var(--g-dark); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 14px; }
+    .plant-avatar { width: 54px; height: 54px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+    .plant-info { flex: 1; }
+    .plant-name { font-family: var(--fn); font-size: 17px; font-weight: 700; color: #fff; }
+    .plant-meta { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+    .pot-badge { background: rgba(255,255,255,0.2); color: #fff; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; display: inline-block; margin-top: 4px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1rem; }
+    .stat-card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 10px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 500; color: var(--g-dark); font-family: var(--fn); }
+    .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .health-bar-wrap { margin-bottom: 1.25rem; }
+    .health-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .health-bar-label span:first-child { font-weight: 500; color: var(--text-primary); }
+    .health-bar-label span:last-child { font-weight: 700; color: var(--g-dark); }
+    .health-bar { height: 8px; background: var(--surface-0); border-radius: 4px; overflow: hidden; }
+    .health-bar-fill { height: 100%; background: var(--g-light); border-radius: 4px; transition: width 1s ease; }
+
+    /* ── Timeline ── */
+    .care-timeline { margin-bottom: 1.25rem; }
+    .timeline-item { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+    .timeline-dot-col { display: flex; flex-direction: column; align-items: center; padding-top: 3px; }
+    .t-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .t-dot.done { background: var(--g-dark); }
+    .t-dot.today { background: var(--g-light); box-shadow: 0 0 0 3px var(--g-pale); }
+    .t-dot.upcoming { background: var(--border-strong); }
+    .t-line { width: 1px; flex: 1; background: var(--border-strong); min-height: 16px; margin-top: 3px; }
+    .t-content { flex: 1; background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .t-content.today-card { border-color: var(--g-light); background: var(--g-pale); }
+    .t-date { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .t-task { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .t-task.today-text { color: var(--g-dark); }
+    .t-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.5; }
+    .t-tags { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+    .t-tag { background: var(--surface-1); color: var(--text-secondary); border-radius: 4px; padding: 2px 7px; font-size: 10px; font-weight: 500; }
+    .t-tag.water { background: #E6F1FB; color: #185FA5; }
+    .t-tag.sun { background: #FAEEDA; color: #854F0B; }
+    .t-tag.fert { background: var(--g-pale); color: var(--g-dark); }
+    .t-tag.check { background: #FCEBEB; color: #A32D2D; }
+
+    /* ── Misc ── */
+    .success-banner { background: var(--g-pale); border: 1px solid var(--g-light); border-radius: 12px; padding: 12px 14px; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+    .success-banner span.icon { font-size: 18px; }
+    .success-banner p { font-size: 13px; color: var(--g-dark); font-weight: 500; }
+    .nav-bottom { display: flex; gap: 8px; padding-top: 1rem; border-top: 0.5px solid var(--border); margin-top: 1rem; }
+    .nav-bottom button { flex: 1; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Logo -->
+  <div class="g-logo">
+    <div class="g-logo-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="14" r="7" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="1.5"/>
+        <path d="M12 10 C12 7 9 4 6 5 C9 5 11 8 12 10Z" fill="#7AB648"/>
+        <path d="M12 10 C12 7 15 4 18 5 C15 5 13 8 12 10Z" fill="#9ED462"/>
+        <path d="M10 14 L14 14 L13.5 20 L10.5 20 Z" fill="rgba(255,255,255,0.6)"/>
+      </svg>
+    </div>
+    <div>
+      <div class="g-logo-text">Greenie</div>
+      <div class="g-logo-sub">chậu cây xơ dừa thông minh</div>
+    </div>
+  </div>
+
+  <!-- ════ S1: Nhập mã chậu ════ -->
+  <div id="s1" class="screen active">
+    <div class="hero-block">
+      <h1>Chào mừng đến với Greenie 🌱</h1>
+      <p>Nhập mã chậu để bắt đầu hành trình chăm sóc cây cá nhân hóa của bạn.</p>
+    </div>
+    <div class="input-card">
+      <label>Mã chậu</label>
+      <div class="code-input-row">
+        <input type="text" id="pot-code" maxlength="8" placeholder="GN000000" />
+        <button class="btn-secondary" onclick="fillDemo()">Demo</button>
+      </div>
+      <div class="error-msg" id="err1">Vui lòng nhập mã chậu hợp lệ (ít nhất 4 ký tự).</div>
+      <p class="code-hint">Mã 8 ký tự in trên đáy chậu. <span onclick="fillDemo()">Dùng mã demo →</span></p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">📦</div>
+      <div class="tip-body">
+        <div class="tip-title">Tìm mã ở đâu?</div>
+        <div class="tip-text">Mã được in trên nhãn dán ở đáy chậu hoặc bên trong hộp đóng gói.</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goToGuide()">Kích hoạt chậu →</button>
+  </div>
+
+  <!-- ════ S2: Hướng dẫn sử dụng ════ -->
+  <div id="s2" class="screen">
+    <div class="step-bar">
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot active">2</div><div class="step-line"></div>
+      <div class="step-dot idle">3</div><div class="step-line"></div>
+      <div class="step-dot idle">4</div>
+    </div>
+    <div class="step-labels">
+      <div class="step-label done">Mã chậu</div>
+      <div class="step-label active">Hướng dẫn</div>
+      <div class="step-label">Cây trồng</div>
+      <div class="step-label">Kế hoạch</div>
+    </div>
+    <div class="guide-header">
+      <h2>Cách sử dụng chậu Greenie</h2>
+      <p>Chậu xơ dừa tích hợp dinh dưỡng — chỉ cần 4 bước đơn giản</p>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">1</div>
+      <div class="guide-step-body highlight">
+        <div class="guide-step-title highlight">Cho giá thể vào chậu</div>
+        <div class="guide-step-desc">Đổ đất trồng hoặc giá thể vào chậu, chừa lại 2–3 cm từ miệng chậu để tiện tưới nước.</div>
+        <div class="material-chips">
+          <span class="chip green">🌿 Đất trồng cây</span>
+          <span class="chip brown">🥥 Xơ dừa sẵn trong chậu</span>
+        </div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">2</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Đặt cây hoặc gieo hạt</div>
+        <div class="guide-step-desc">Đặt cây con hoặc gieo hạt vào giữa chậu. Lấp đất nhẹ nhàng quanh gốc, không nén chặt.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">3</div>
+      <div class="guide-step-body highlight">
+        <div class="guide-step-title highlight">Tưới nước lần đầu</div>
+        <div class="guide-step-desc">Tưới đẫm nước để kích hoạt lớp mụn dừa bên trong. Nước thấm qua đất tiếp xúc với Osmocote, bắt đầu giải phóng dinh dưỡng từ từ.</div>
+        <div class="material-chips">
+          <span class="chip green">💧 Tưới đẫm lần đầu</span>
+          <span class="chip green">🌿 Osmocote hoạt động</span>
+        </div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">4</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Đặt nơi có ánh sáng phù hợp</div>
+        <div class="guide-step-desc">Đặt chậu nơi có ánh sáng phù hợp với loại cây. Chậu xơ dừa thoáng khí — tránh tưới quá nhiều gây úng rễ.</div>
+      </div>
+    </div>
+    <div class="input-card" style="margin-bottom:1rem;">
+      <label>Kích thước chậu</label>
+      <table class="size-table">
+        <thead><tr><th>Size</th><th>Đường kính</th><th>Phù hợp</th></tr></thead>
+        <tbody>
+          <tr><td><span class="size-badge">S</span></td><td>10–12 cm</td><td>Cây mini, xương rồng, sen đá</td></tr>
+          <tr><td><span class="size-badge">M</span></td><td>15–18 cm</td><td>Lan, lưỡi hổ, kim tiền</td></tr>
+          <tr><td><span class="size-badge">L</span></td><td>22–25 cm</td><td>Monstera, trầu bà, dracaena</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">⏱️</div>
+      <div class="tip-body">
+        <div class="tip-title">Dinh dưỡng tự động 6–8 tháng</div>
+        <div class="tip-text">Osmocote trong lớp mụn dừa giải phóng dinh dưỡng mỗi lần tưới — không cần bón phân thêm trong giai đoạn đầu.</div>
+      </div>
+    </div>
+    <div class="nav-bottom">
+      <button class="btn-ghost" onclick="goTo('s1')">← Quay lại</button>
+      <button class="btn-primary" style="flex:2" onclick="goTo('s3')">Nhập thông tin cây →</button>
+    </div>
+  </div>
+
+  <!-- ════ S3: Thông tin cây + AI ════ -->
+  <div id="s3" class="screen">
+    <div class="step-bar">
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot active">3</div><div class="step-line"></div>
+      <div class="step-dot idle">4</div>
+    </div>
+    <div class="step-labels">
+      <div class="step-label done">Mã chậu</div>
+      <div class="step-label done">Hướng dẫn</div>
+      <div class="step-label active">Cây trồng</div>
+      <div class="step-label">Kế hoạch</div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-info" onclick="switchTab('info')">🌿 Thông tin cây</button>
+      <button class="tab-btn" id="tab-ai" onclick="switchTab('ai')">✨ AI gợi ý chăm sóc</button>
+    </div>
+
+    <!-- Tab info -->
+    <div id="panel-info">
+      <div class="section-title">Bạn trồng cây gì?</div>
+      <div class="section-sub">Greenie sẽ tạo lịch chăm sóc phù hợp riêng cho bạn.</div>
+      <div class="input-card" style="margin-bottom:1rem;">
+        <label>Kiểu dáng chậu</label>
+        <div class="pot-type-grid">
+          <div class="pot-option" id="pot-round" onclick="selectPot('round')">
+            <span class="pot-option-icon">🪴</span>
+            <div class="pot-option-name">Chậu tròn</div>
+            <div class="pot-option-sub">Phù hợp cây nhỏ</div>
+          </div>
+          <div class="pot-option selected" id="pot-tall" onclick="selectPot('tall')">
+            <span class="pot-option-icon">🌿</span>
+            <div class="pot-option-name">Chậu đứng</div>
+            <div class="pot-option-sub">Phù hợp cây cao</div>
+          </div>
+        </div>
+      </div>
+      <div class="input-card">
+        <div class="form-row">
+          <label>Tên cây trồng</label>
+          <input type="text" id="plant-name" placeholder="VD: Cây lưỡi hổ, Lan, Kim tiền..." oninput="syncAiInput(this.value)" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-row" style="margin-bottom:0">
+            <label>Ngày trồng</label>
+            <input type="date" id="plant-date" />
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label>Vị trí đặt cây</label>
+            <select id="plant-loc">
+              <option>Trong nhà (ít sáng)</option>
+              <option>Gần cửa sổ</option>
+              <option>Ban công / ngoài trời</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab AI -->
+    <div id="panel-ai" style="display:none;">
+      <div class="ai-header">
+        <div class="ai-spark">✨</div>
+        <div class="ai-header-text">
+          <h2>AI gợi ý chăm sóc</h2>
+          <p>Nhập tên cây để nhận hướng dẫn cá nhân hóa</p>
+        </div>
+      </div>
+      <div class="section-sub">Chọn nhanh:</div>
+      <div class="quick-plants">
+        <span class="quick-plant" onclick="askAI('Cây lưỡi hổ')">🌿 Lưỡi hổ</span>
+        <span class="quick-plant" onclick="askAI('Cây kim tiền')">🍀 Kim tiền</span>
+        <span class="quick-plant" onclick="askAI('Cây lan hồ điệp')">🌸 Lan hồ điệp</span>
+        <span class="quick-plant" onclick="askAI('Cây xương rồng')">🌵 Xương rồng</span>
+        <span class="quick-plant" onclick="askAI('Cây trầu bà')">🌱 Trầu bà</span>
+        <span class="quick-plant" onclick="askAI('Cây monstera')">🌴 Monstera</span>
+        <span class="quick-plant" onclick="askAI('Cây sen đá')">🪨 Sen đá</span>
+      </div>
+      <div class="ai-input-row">
+        <input type="text" id="ai-plant-input" placeholder="Nhập tên cây bất kỳ..." />
+        <button class="btn-secondary" onclick="askAI()">Hỏi AI →</button>
+      </div>
+      <div class="ai-result-box" id="ai-result">
+        <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:1rem 0;">Chọn hoặc nhập tên cây để nhận gợi ý từ AI 🌱</div>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <button class="btn-ghost" onclick="goTo('s2')">← Hướng dẫn</button>
+      <button class="btn-primary" style="flex:2" onclick="goToDash()">Tạo kế hoạch chăm sóc →</button>
+    </div>
+  </div>
+
+  <!-- ════ S4: Dashboard ════ -->
+  <div id="s4" class="screen">
+    <div class="step-bar">
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot active">🌱</div>
+    </div>
+    <div class="step-labels">
+      <div class="step-label done">Mã chậu</div>
+      <div class="step-label done">Hướng dẫn</div>
+      <div class="step-label done">Cây trồng</div>
+      <div class="step-label active">Kế hoạch</div>
+    </div>
+    <div class="success-banner">
+      <span class="icon">✅</span>
+      <p>Kế hoạch chăm sóc đã sẵn sàng! Chậu <strong id="pot-code-display">GN240612</strong> đã kích hoạt.</p>
+    </div>
+    <div class="dashboard-header">
+      <div class="plant-avatar" id="plant-emoji-display">🌱</div>
+      <div class="plant-info">
+        <div class="plant-name" id="dash-plant-name">Cây của bạn</div>
+        <div class="plant-meta">Ngày trồng: <span id="dash-date">—</span></div>
+        <div class="pot-badge" id="dash-pot">—</div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val">14</div><div class="stat-lbl">Ngày tuổi</div></div>
+      <div class="stat-card"><div class="stat-val">3</div><div class="stat-lbl">Lần tưới</div></div>
+      <div class="stat-card"><div class="stat-val">6mo</div><div class="stat-lbl">Dinh dưỡng còn</div></div>
+    </div>
+    <div class="health-bar-wrap">
+      <div class="health-bar-label"><span>Sức khỏe cây</span><span>Tốt (82%)</span></div>
+      <div class="health-bar"><div class="health-bar-fill" id="health-fill" style="width:0%"></div></div>
+    </div>
+    <div class="section-title" style="margin-bottom:1rem;">Lịch chăm sóc</div>
+    <div class="care-timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot-col"><div class="t-dot done"></div><div class="t-line"></div></div>
+        <div class="t-content"><div class="t-date">16/06 · Đã hoàn thành</div><div class="t-task">Tưới nước lần đầu & đặt cây</div><div class="t-tags"><span class="t-tag water">💧 Tưới</span><span class="t-tag">Kích hoạt mụn dừa</span></div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot-col"><div class="t-dot done"></div><div class="t-line"></div></div>
+        <div class="t-content"><div class="t-date">19/06 · Đã hoàn thành</div><div class="t-task">Kiểm tra độ ẩm & xoay chậu</div><div class="t-tags"><span class="t-tag sun">☀️ Ánh sáng</span><span class="t-tag check">🔍 Kiểm tra</span></div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot-col"><div class="t-dot today"></div><div class="t-line"></div></div>
+        <div class="t-content today-card"><div class="t-date" style="color:var(--g-mid);">🔔 Hôm nay · 27/06</div><div class="t-task today-text">Tưới nước & kiểm tra rễ cây</div><div class="t-desc">Tưới đến khi nước thấm đều. Rễ trắng nhú ra đáy chậu là cây đang phát triển tốt.</div><div class="t-tags"><span class="t-tag water">💧 Tưới</span><span class="t-tag check">🔍 Kiểm tra rễ</span></div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot-col"><div class="t-dot upcoming"></div><div class="t-line"></div></div>
+        <div class="t-content"><div class="t-date">04/07 · Sắp tới</div><div class="t-task" style="color:var(--text-secondary);">Tưới nước định kỳ</div><div class="t-tags"><span class="t-tag water">💧 Tưới</span></div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot-col"><div class="t-dot upcoming"></div></div>
+        <div class="t-content"><div class="t-date">16/07 · Tháng 1</div><div class="t-task" style="color:var(--text-secondary);">Đánh giá sinh trưởng tháng đầu</div><div class="t-tags"><span class="t-tag check">🔍 Đánh giá</span><span class="t-tag fert">🌿 Dinh dưỡng</span></div></div>
+      </div>
+    </div>
+
+    <div id="ai-dash-tip" style="display:none;margin-bottom:1rem;">
+      <div class="section-title" style="margin-bottom:0.75rem;">Gợi ý AI cho cây của bạn</div>
+      <div class="tip-card">
+        <div class="tip-icon">✨</div>
+        <div class="tip-body">
+          <div class="tip-title" id="ai-dash-title">Mẹo chăm sóc</div>
+          <div class="tip-text" id="ai-dash-text">...</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-ghost" style="width:100%;margin-top:0.5rem;" onclick="goTo('s1')">← Đăng ký chậu mới</button>
+  </div>
+
+</div><!-- /#app -->
+
+<script>
+  /* ── State ── */
+  let potType = 'tall';
+  let aiSummary = '';
+
+  /* ── Navigation ── */
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function fillDemo() {
+    document.getElementById('pot-code').value = 'GN240612';
+  }
+
+  function goToGuide() {
+    const code = document.getElementById('pot-code').value.trim();
+    const err = document.getElementById('err1');
+    if (!code || code.length < 4) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    document.getElementById('plant-date').value = new Date().toISOString().split('T')[0];
+    goTo('s2');
+  }
+
+  /* ── Pot type ── */
+  function selectPot(type) {
+    potType = type;
+    document.getElementById('pot-round').classList.toggle('selected', type === 'round');
+    document.getElementById('pot-tall').classList.toggle('selected', type === 'tall');
+  }
+
+  /* ── Tab switch ── */
+  function switchTab(tab) {
+    document.getElementById('tab-info').classList.toggle('active', tab === 'info');
+    document.getElementById('tab-ai').classList.toggle('active', tab === 'ai');
+    document.getElementById('panel-info').style.display = tab === 'info' ? 'block' : 'none';
+    document.getElementById('panel-ai').style.display = tab === 'ai' ? 'block' : 'none';
+  }
+
+  function syncAiInput(val) {
+    document.getElementById('ai-plant-input').value = val;
+  }
+
+  /* ── AI call — gọi qua /api/chat (Vercel Function) ── */
+  async function askAI(plantOverride) {
+    const input = document.getElementById('ai-plant-input');
+    const plantName = plantOverride || input.value.trim();
+    if (!plantName) { input.focus(); return; }
+    if (plantOverride) input.value = plantOverride;
+
+    const resultBox = document.getElementById('ai-result');
+    resultBox.innerHTML = `<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>`;
+
+    const prompt = `Bạn là chuyên gia chăm sóc cây trồng cho sản phẩm chậu xơ dừa thông minh "Greenie". Chậu có lớp ngoài xơ dừa + Latex, lớp trong mụn dừa + phân bón Osmocote tự giải phóng dinh dưỡng 6-8 tháng khi tưới nước.
+
+Trả lời ĐÚNG JSON sau, không thêm bất kỳ text nào khác:
+{
+  "emoji": "emoji đại diện cho cây",
+  "water_freq": "tần suất tưới nước ngắn gọn",
+  "light": "nhu cầu ánh sáng ngắn gọn",
+  "temp": "nhiệt độ phù hợp",
+  "difficulty": "Dễ / Trung bình / Khó",
+  "tips": ["mẹo 1 kết hợp chậu Greenie (15-20 chữ)", "mẹo 2", "mẹo 3"],
+  "summary": "1 câu tóm tắt đặc điểm chăm sóc kết hợp chậu Greenie (20-25 chữ)"
+}
+
+Tên cây: ${plantName}`;
+
+    try {
+      /* Gọi Vercel Function /api/chat thay vì gọi thẳng Anthropic */
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await resp.json();
+      const info = JSON.parse(data.text.replace(/```json|```/g, '').trim());
+      aiSummary = info.summary || '';
+
+      resultBox.innerHTML = `
+        <div class="ai-result-plant-name">${info.emoji} ${plantName}</div>
+        <div class="ai-section-label">Nhu cầu chăm sóc</div>
+        <div class="ai-care-grid">
+          <div class="ai-care-card"><div class="ai-care-card-icon">💧</div><div class="ai-care-card-title">Tưới nước</div><div class="ai-care-card-val">${info.water_freq}</div></div>
+          <div class="ai-care-card"><div class="ai-care-card-icon">☀️</div><div class="ai-care-card-title">Ánh sáng</div><div class="ai-care-card-val">${info.light}</div></div>
+          <div class="ai-care-card"><div class="ai-care-card-icon">🌡️</div><div class="ai-care-card-title">Nhiệt độ</div><div class="ai-care-card-val">${info.temp}</div></div>
+          <div class="ai-care-card"><div class="ai-care-card-icon">📊</div><div class="ai-care-card-title">Độ khó</div><div class="ai-care-card-val">${info.difficulty}</div></div>
+        </div>
+        <div class="ai-section-label">Mẹo với chậu Greenie</div>
+        <ul class="ai-tip-list">${info.tips.map(t => `<li>${t}</li>`).join('')}</ul>`;
+
+      if (!document.getElementById('plant-name').value)
+        document.getElementById('plant-name').value = plantName;
+    } catch (e) {
+      resultBox.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;">Không thể kết nối AI. Kiểm tra lại kết nối và thử lại.</div>`;
+    }
+  }
+
+  /* ── Dashboard ── */
+  const plantEmojis = { 'lưỡi hổ':'🌿','lan':'🌸','kim tiền':'🍀','xương rồng':'🌵','trầu bà':'🌱','monstera':'🌴','sen đá':'🪨','bạc hà':'🌾' };
+  function getEmoji(name) {
+    const n = name.toLowerCase();
+    for (const [k,v] of Object.entries(plantEmojis)) { if (n.includes(k)) return v; }
+    return '🌱';
+  }
+
+  function goToDash() {
+    const pName = document.getElementById('plant-name').value.trim() || 'Cây của bạn';
+    const pDate = document.getElementById('plant-date').value;
+    const code = (document.getElementById('pot-code').value.trim() || 'GN000000').toUpperCase();
+    const potLabel = potType === 'tall' ? 'Chậu đứng' : 'Chậu tròn';
+
+    document.getElementById('dash-plant-name').textContent = pName;
+    document.getElementById('plant-emoji-display').textContent = getEmoji(pName);
+    document.getElementById('pot-code-display').textContent = code;
+    document.getElementById('dash-pot').textContent = `${code} · ${potLabel} · Size M`;
+
+    if (pDate) {
+      const [y,m,d] = pDate.split('-');
+      document.getElementById('dash-date').textContent = `${d}/${m}/${y}`;
+    }
+
+    if (aiSummary) {
+      document.getElementById('ai-dash-tip').style.display = 'block';
+      document.getElementById('ai-dash-title').textContent = 'Gợi ý cho ' + pName;
+      document.getElementById('ai-dash-text').textContent = aiSummary;
+    }
+
+    goTo('s4');
+    setTimeout(() => { document.getElementById('health-fill').style.width = '82%'; }, 300);
+  }
+</script>
+</body>
+</html>
